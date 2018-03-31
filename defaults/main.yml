@@ -1,0 +1,17 @@
+---
+solr_user: solr
+solr_create_user: true
+
+# solr_workspace: e.g. /home/[someuser]
+
+solr_install_path: "/opt/solr"
+
+solr_mirror: "https://archive.apache.org/dist"
+
+solr_patch_file: "SOLR-8548.patch"
+
+solr_version: "5.4.1"
+
+solr_xms: "256M"
+solr_xmx: "512M"
+

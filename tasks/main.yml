@@ -1,0 +1,83 @@
+---
+- apt:
+    pkg: ant
+    state: present
+  become: true
+
+- include: user.yml
+  when: solr_create_user
+
+- name: Check if Solr has been installed already.
+  stat:
+    path: "{{ solr_install_path }}"
+  register: solr_install_path_status
+
+- name: Set solr_filename
+  set_fact:
+    solr_filename: "solr-{{ solr_version }}"
+
+- name: Download solr {{ solr_version }} source code
+  get_url:
+    url: "{{ solr_mirror }}/lucene/solr/{{ solr_version }}/{{ solr_filename }}-src.tgz"
+    dest: "{{ solr_workspace }}/{{ solr_filename }}-src.tgz"
+    force: no
+  when: solr_install_path_status.stat.isdir is not defined
+  register: solr_download_status
+
+- name: tar -zxvf
+  unarchive:
+    src: "{{ solr_workspace }}/{{ solr_filename }}-src.tgz"
+    dest: "{{ solr_workspace }}"
+    copy: no
+  when: solr_download_status.changed
+
+- name: install SOLR patch
+  patch:
+    src: templates/{{ solr_patch_file }}
+    basedir: "{{ solr_workspace }}/{{ solr_filename }}"
+    # equivalent of patch -p1 (to strip off the first slash)
+    strip: 1
+
+- name: run ant ivy-bootstrap
+  command: ant ivy-bootstrap
+  args:
+    chdir: "{{ solr_workspace }}/{{ solr_filename }}"
+
+- name: compile solr
+  command: ant compile
+  args:
+    chdir: "{{ solr_workspace }}/{{ solr_filename }}"
+
+- name: build Apache Ant/solr web-server
+  command: ant server
+  args:
+    chdir: "{{ solr_workspace }}/{{ solr_filename }}/solr"
+
+- name: make bin/solr executable
+  file:
+     path: "{{ solr_workspace }}/{{ solr_filename }}/solr/bin/solr"
+     mode: 0755
+     owner: "{{ solr_user }}"
+     group: "{{ solr_user }}"
+  become: true
+
+- name: copy files to {{ solr_install_path }}
+  command: cp -r {{ solr_workspace }}/{{ solr_filename }}/solr/ {{ solr_install_path }}
+  become: true
+
+- name: recursive chown for {{ solr_install_path }}
+  file:
+    path: "{{ solr_install_path }}"
+    state: directory
+    recurse: true
+    owner: "{{ solr_user }}"
+    group: "{{ solr_user }}"
+  become: true
+
+# todo make this a handler
+- name: start solr server
+  command: "{{ solr_install_path}}/bin/solr start"
+  become: true
+  become_user: "{{ solr_user }}"
+
+# todo cleanup working directory
