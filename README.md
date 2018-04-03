@@ -4,7 +4,11 @@ This is a role to specifically install a version of Solr that is compatible with
 As search_api_solar does not work with Solr 5.5 or later, the most recent version is 5.4.1, but a patch to that is required to access symlinks.
 Therefore we have to compile from source.
 
-At the time of writing this is very rough and ready, for example no /etc/init.d script is created and the compilation is not idempotent.
+At the time of writing this is very rough and ready, e.g.
+
+- the compilation steps are not properly idempotent (will happen each time)
+- no tests are run - you need to do `ant test`, but beware this took 108 
+  minutes on a Linode box.
 
 ## Requirements
 
