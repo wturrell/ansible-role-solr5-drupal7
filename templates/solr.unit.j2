@@ -4,7 +4,7 @@ After=syslog.target network.target remote-fs.target nss-lookup.target
 
 [Service]
 PIDFile={{ solr_install_path }}/bin/solr-{{ solr_port }}.pid
-ExecStart={{ solr_install_path }}/bin/solr -e cloud -noprompt
+ExecStart={{ solr_install_path }}/bin/solr start -noprompt
 User=solr
 ExecReload=/bin/kill -s HUP $MAINPID
 ExecStop=/bin/kill -s QUIT $MAINPID
